@@ -8,14 +8,6 @@
   </parent>
   <artifactId>service-starter</artifactId>
   <packaging>pom</packaging>
-  <properties>
-    <docker-maven-plugin.version>0.24.0</docker-maven-plugin.version>
-    <docker.organization>vasdvp</docker.organization>
-    <docker.baseImage>vasdvp/health-apis-application-base</docker.baseImage>
-    <docker.baseVersion>jdk-12</docker.baseVersion>
-    <docker.tag>latest</docker.tag>
-    <docker.imageName>health-apis-${project.artifactId}</docker.imageName>
-  </properties>
   <dependencyManagement>
     <dependencies>
       <dependency>
@@ -48,17 +40,6 @@
   </dependencies>
   <build>
     <plugins>
-      <plugin>
-        <groupId>org.springframework.boot</groupId>
-        <artifactId>spring-boot-maven-plugin</artifactId>
-        <executions>
-          <execution>
-            <goals>
-              <goal>build-info</goal>
-            </goals>
-          </execution>
-        </executions>
-      </plugin>
       <!--
         SSL certs are required for running but not intended to be part of the classpath.
         We want to fetch them so they can be referenced locally from the file system
@@ -94,64 +75,4 @@
       </plugin>
     </plugins>
   </build>
-  <profiles>
-    <profile>
-      <id>docker</id>
-      <activation>
-        <file>
-          <exists>src/main/resources/application.properties</exists>
-        </file>
-      </activation>
-      <build>
-        <plugins>
-          <plugin>
-            <groupId>io.fabric8</groupId>
-            <artifactId>docker-maven-plugin</artifactId>
-            <version>${docker-maven-plugin.version}</version>
-            <configuration>
-              <images>
-                <image>
-                  <name>${docker.organization}/${docker.imageName}</name>
-                  <build>
-                    <from>${docker.baseImage}:${docker.baseVersion}</from>
-                    <assembly>
-                      <targetDir>/tmp</targetDir>
-                      <inline>
-                        <files>
-                          <file>
-                            <source>target/${project.build.finalName}.jar</source>
-                          </file>
-                        </files>
-                      </inline>
-                    </assembly>
-                    <env>
-                      <AWS_APP_NAME>${project.artifactId}</AWS_APP_NAME>
-                    </env>
-                    <runCmds>
-                      <run>mkdir -p /opt/va</run>
-                      <run>mv /tmp/${project.build.finalName}.jar /opt/va</run>
-                    </runCmds>
-                    <tags>
-                      <tag>${project.version}</tag>
-                      <tag>${docker.tag}</tag>
-                    </tags>
-                  </build>
-                </image>
-              </images>
-            </configuration>
-            <executions>
-              <execution>
-                <id>build</id>
-                <phase>deploy</phase>
-                <goals>
-                  <goal>build</goal>
-                  <goal>push</goal>
-                </goals>
-              </execution>
-            </executions>
-          </plugin>
-        </plugins>
-      </build>
-    </profile>
-  </profiles>
 </project>
